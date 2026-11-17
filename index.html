@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あなたがもしマミヨバンドのメンバーだったら</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        #app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1, h2 { color: #f8c291; }
+        p { line-height: 1.6; }
+        button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #e83e8c;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+        button:hover { background-color: #d81b60; }
+        .hidden { display: none; }
+        .display-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="start-screen">
+            <img src="top.png" alt="トップ画像" class="display-image">
+            <h1>あなたがもしマミヨバンドのメンバーだったら</h1>
+            <p>マミヨバンドに入るなら、あなたにぴったりのポジションはどれ？<br>直感で答えてね！</p>
+            <button onclick="startQuiz()">診断スタート</button>
+        </div>
+
+        <div id="question-screen" class="hidden">
+            <h2 id="question-text">質問テキスト</h2>
+            <div id="options-container"></div>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <h2>あなたのポジションは…</h2>
+            <div id="result-image-container"></div>
+            <h1 id="result-title">結果タイトル</h1>
+            <p id="result-description">結果の解説文がここに入ります。</p>
+            <button onclick="location.reload()">もう一度診断する</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: "Q1. グループで行動する時、あなたは？",
+                options: [
+                    { text: "全体を把握して的確にサポートする", roles: ["キーボード", "コーラス"] },
+                    { text: "場を盛り上げてみんなを引っ張る", roles: ["パーカッション", "ダンサー"] },
+                    { text: "自分の個性やアイデアでスパイスを加える", roles: ["ブラスセクション"] }
+                ]
+            },
+            {
+                text: "Q2. 好きな音楽の楽しみ方は？",
+                options: [
+                    { text: "一緒に歌ったりハモったりするのが好き", roles: ["コーラス"] },
+                    { text: "リズムに乗って体を動かすのが好き", roles: ["ダンサー", "パーカッション"] },
+                    { text: "いろんな楽器の音色やアレンジを聴き込む", roles: ["キーボード", "ブラスセクション"] }
+                ]
+            },
+            {
+                text: "Q3. 自分の性格を一言で言うなら？",
+                options: [
+                    { text: "周囲との調和を大切にするバランサー", roles: ["コーラス", "キーボード"] },
+                    { text: "ノリが良くていつも元気なムードメーカー", roles: ["パーカッション", "ブラスセクション"] },
+                    { text: "感情表現が豊かで、とにかく楽しむタイプ", roles: ["ダンサー"] }
+                ]
+            }
+        ];
+
+        const resultsData = {
+            "コーラス": "美しいハーモニーで楽曲に深みを与える、思いやり溢れるサポート役です。",
+            "ブラスセクション": "楽曲に華やかさをプラスするスパイス！個性的で華のある存在です。",
+            "パーカッション": "バンドの心臓！リズム感抜群で、みんなのテンションを操るムードメーカーです。",
+            "ダンサー": "視覚で観客を魅了する！表現力豊かで、ステージを一番楽しむパフォーマーです。",
+            "キーボード": "多彩な音色で楽曲を彩るメロディメーカー！知的で全体を俯瞰できるクリエイタータイプです。"
+        };
+
+        const imageFiles = {
+            "コーラス": "chorus.jpg",
+            "ブラスセクション": "brass.jpg",
+            "パーカッション": "percussion.jpg",
+            "ダンサー": "dancer.jpg",
+            "キーボード": "keyboard.jpg"
+        };
+
+        let scores = {
+            "コーラス": 0, "ブラスセクション": 0, "パーカッション": 0, "ダンサー": 0, "キーボード": 0
+        };
+
+        let currentQuestionIndex = 0;
+
+        function startQuiz() {
+            document.getElementById("start-screen").classList.add("hidden");
+            document.getElementById("question-screen").classList.remove("hidden");
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById("question-text").innerText = q.text;
+            const container = document.getElementById("options-container");
+            container.innerHTML = ""; 
+            q.options.forEach(option => {
+                const btn = document.createElement("button");
+                btn.innerText = option.text;
+                btn.onclick = () => selectAnswer(option.roles);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(roles) {
+            roles.forEach(role => { scores[role] += 1; });
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) { showQuestion(); } 
+            else { showResult(); }
+        }
+
+        function showResult() {
+            document.getElementById("question-screen").classList.add("hidden");
+            document.getElementById("result-screen").classList.remove("hidden");
+            let maxScore = 0;
+            let finalRole = "コーラス"; 
+            for (const role in scores) {
+                if (scores[role] > maxScore) { maxScore = scores[role]; finalRole = role; }
+            }
+            document.getElementById("result-title").innerText = finalRole;
+            document.getElementById("result-description").innerText = resultsData[finalRole];
+            document.getElementById("result-image-container").innerHTML = `<img src="${imageFiles[finalRole]}" alt="${finalRole}の画像" class="display-image">`;
+        }
+    </script>
+</body>
+</html>
